@@ -3,16 +3,31 @@
 String message = "HELLO WORLD";
 volatile bool PowerState = false;
 
+// Defining morse code mapping
+const char* MORSE_CODE[][2]={
+  {'A', ".-"},   {'B', "-..."},  {'C', "-.-."}, {'D', "-.."},
+  {'E', "."},    {'F', "..-."},  {'G', "--."},  {'H', "...."},
+  {'I', ".."},   {'J', ".---"},  {'K', "-.-"},  {'L', ".-.."},
+  {'M', "--"},   {'N', "-."},    {'O', "---"},  {'P', ".--."},
+  {'Q', "--.-"}, {'R', ".-."},   {'S', "..."},  {'T', "-"},
+  {'U', "..-"},  {'V', "...-"},  {'W', ".--"},  {'X', "-..-"},
+  {'Y', "-.--"}, {'Z', "--.."},  {'1', ".----"}, {'2', "..---"},
+  {'3', "...--"}, {'4', "....-"}, {'5', "....."}, {'6', "-...."},
+  {'7', "--..."}, {'8', "---.."}, {'9', "----."}, {'0', "-----"}
+}
+
+//Declaring gap timing
 int charGap = 100;
 int letterGap = 200;
 int wordGap = 600;
 
-//Declaring Pins
+//Declaring ColorPins
 int redPin = 11;
 int greenPin = 10;
 int bluePin = 9;
-int beepPin = 4;
 
+//Declaring BuzzerPin
+int beepPin = 4;
 
 void setup() {
   // ColorPin are configured for output
@@ -33,30 +48,12 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(3), PowerOff, RISING);
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  if (PowerState == true) {
-    int messageLenght = message.length();
-    for (int i = 0; i <= messageLenght && PowerState == true; i++) {
-      char testChar = message[i];
-      CheckChar(testChar);
-      delay(charGap);
-    }
-
-
-  } else {
-    SetColor(255, 0, 0);
-  }
-  delay(wordGap);
-}
 void TogglePowerState() {
   PowerState = !PowerState;
 }
 
 void PowerOff(){
-  //comment
   PowerState = false;
-  
 }
 
 void SetColor(int redValue, int greenValue, int blueValue) {
@@ -338,4 +335,18 @@ bool CheckChar(char CHAR) {
 
 
   return true;
+}
+
+void loop() {
+  if (PowerState == true) {
+    int messageLenght = message.length();
+    for (int i = 0; i <= messageLenght && PowerState == true; i++) {
+      char testChar = message[i];
+      CheckChar(testChar);
+      delay(charGap);
+    }
+  } else {
+    SetColor(255, 0, 0);
+  }
+  delay(wordGap);
 }
