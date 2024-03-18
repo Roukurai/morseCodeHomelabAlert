@@ -37,7 +37,7 @@ int blueValue = 0;
 int beepPin = 4;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("Welcome, configurations are on the way");
   // ColorPin are configured for output
   pinMode(redPin, OUTPUT);
