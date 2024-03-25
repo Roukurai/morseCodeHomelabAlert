@@ -19,47 +19,49 @@ const char* MORSE_CODE[][2]={
 };
 
 //Declaring gap timing
-int charDelay = 100;
-int letterDelay = 200;
-int wordDelay = 600;
+int CHAR_DELAY = 100;
+int LETTER_DELAY = 200;
+int WORD_DELAY = 600;
 
-//Declaring ColorPins
-int redPin = 9;
-int greenPin = 5;
-int bluePin = 6;
+//Declaring Pins
+int RED_PIN = 9;
+int GREEN_PIN = 5;
+int BLUE_PIN = 6;
+int BEEP_PIN = 4;
 
 //Declaring ColorValues
 int redValue = 0;
 int greenValue = 0;
 int blueValue = 0;
 
-//Declaring BuzzerPin
-int beepPin = 4;
+// Declaring functions [kinda like init i would assume before any one is requested they already exist]
+void setup();
+void loop();
+void setColor(int red,int green, int blue);
+void toggleLed(bool toggleStatus, bool toggleBuzzer=false);
+void dot();
+void dash();
+bool encodeMorseChar(char CHAR);
+void printMorseDictionary();
+void messageToMorse(String message);
+
+
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Welcome, configurations are on the way");
-  // ColorPin are configured for output
-  pinMode(redPin, OUTPUT);
-  pinMode(greenPin, OUTPUT);
-  pinMode(bluePin, OUTPUT);
-  
-  // BuzzerPin is configured for output
-  pinMode(beepPin, OUTPUT);
-
-  // InputPin is configured for input
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
+  pinMode(BEEP_PIN, OUTPUT);
   pinMode(2, INPUT);
-
-  //Start message loop Interrupt setup
   attachInterrupt(digitalPinToInterrupt(2), powerStateToggle, RISING);
-  
+  Serial.println("Arduino is ready");
 }
 
 void powerStateToggle() {
-  Serial.print("Changing Power State to ");
-  Serial.println(!powerState);
   powerState = !powerState;
 }
+
 void setColor(int red, int green, int blue) {
   redValue = red;
   greenValue=green;
@@ -68,36 +70,36 @@ void setColor(int red, int green, int blue) {
 
 void toggleLed(bool toggleStatus, bool toggleBuzzer=false){
   if (!toggleStatus){
-  digitalWrite(redPin,LOW);
-  digitalWrite(greenPin,LOW);
-  digitalWrite(bluePin,LOW);
-  digitalWrite(beepPin, LOW);  
+  digitalWrite(RED_PIN,LOW);
+  digitalWrite(GREEN_PIN,LOW);
+  digitalWrite(BLUE_PIN,LOW);
+  digitalWrite(BEEP_PIN, LOW);  
   }else {
-  analogWrite(redPin, redValue);
-  analogWrite(greenPin, greenValue);
-  analogWrite(bluePin, blueValue);
-  
+  analogWrite(RED_PIN, redValue);
+  analogWrite(GREEN_PIN, greenValue);
+  analogWrite(BLUE_PIN, blueValue);
   if (toggleBuzzer){
-    digitalWrite(beepPin, HIGH);
+    digitalWrite(BEEP_PIN, HIGH);
   }
   }
 }
+
 void dot() {
   toggleLed(true,true);
   delay(100);
   toggleLed(false);
-  delay(charDelay);
+  delay(CHAR_DELAY);
 }
 
 void dash() {
   toggleLed(true,true);
   delay(300);
   toggleLed(false);
-  delay(charDelay);
+  delay(CHAR_DELAY);
 }
 
 
-bool encodeMorseCharacter(char CHAR) {
+bool encodeMorseChar(char CHAR) {
   //Iterate through the morse code mapping
   for (int i=0; i<sizeof(MORSE_CODE) / sizeof(MORSE_CODE[0]); i++){
     if (MORSE_CODE[i][0]==CHAR){
@@ -110,7 +112,6 @@ bool encodeMorseCharacter(char CHAR) {
         } else if (morse[j] == '-'){
           dash();
         } else {
-          //False due to morse char not available
           errorMessage = "CHAR Not found in morse mapping";
           errorCode = 1300;
           return false;
@@ -120,10 +121,9 @@ bool encodeMorseCharacter(char CHAR) {
     }
   }
   if (CHAR == ' '){
-    delay(wordDelay);
+    delay(WORD_DELAY);
     return true;
   } else {
-    // CHAR Not found in mapping
     errorMessage = "CHAR Not found in morse mapping";
     errorCode = 1300;
     return false;
@@ -134,9 +134,6 @@ void printMorseDic(){
   for (int i = 0; i < sizeof(MORSE_CODE) / sizeof(MORSE_CODE[0]); i++) {
     char character = MORSE_CODE[i][0];
     String morse = String(MORSE_CODE[i][1]);
-    Serial.print(character);
-    Serial.print(": ");
-    Serial.println(morse);
   }
   messageToMorse(alertMessage);
 }
@@ -145,39 +142,37 @@ void printMorseDic(){
 void messageToMorse(String message){
   //Convert to UPPER to remove CaseSensitive messages
   message.toUpperCase();
-  Serial.print("Current message is: ");
-  Serial.println(message);
-  int messageLength = message.length();
+  Serial.print("Message received");
+  int messageLength = message.length()-1;
   for (int i=0; i<=messageLength && powerState == true; i++){
     char testChar = message[i];
-    Serial.print("Current char is: ");
+    Serial.print(":: ");
     Serial.println(testChar);
-    encodeMorseCharacter(testChar);  
-    delay(charDelay);
+    encodeMorseChar(testChar);  
+    delay(CHAR_DELAY);
   }
-  toggleLed(true,false);  
+  toggleLed(true,false);
+  Serial.println("/420");  
 }
 
 void loop() {
   if (powerState == true) {
-    
     // If Power State indicates that the service has been turned On
     setColor(0, 255, 0);
     toggleLed(true,false);
-    while (Serial.available()==0){
-      if(!powerState){
-        break;
-        }
-          
+    while (!Serial.available()){
+      
     }
-    String inputMessage = Serial.readStringUntil('\n');
-    messageToMorse(inputMessage);
-    
-    
+
+    // Receive message and check not empty
+    String inputMessage = Serial.readStringUntil('\n');    
+    if (inputMessage!=NULL){
+      messageToMorse(inputMessage);      
+    }
   } else {
     //Obviously Power State is Off, or StandBy for context purposes
         setColor(0, 0, 255);
         toggleLed(true,false);
   }
-  delay(wordDelay);
+  delay(WORD_DELAY);
 }
